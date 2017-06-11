@@ -1,32 +1,44 @@
 'use strict';
+var Alexa = require("alexa-sdk");
+// var AWS = require('aws-sdk');
 
-var Parser = require('./ParameterParser');
-var grangeRepository = require('./grangeRepository');
-var parameterProcessor = require('./ParameterProcessor');
-var responseFormatter = require('./ResponseFormatter');
+exports.handler = function(event, context, callback) {
+    var alexa = Alexa.handler(event, context);
+    alexa.registerHandlers(handlers);
+    alexa.execute();
+};
 
-exports.handler = (event, context, callback) => {
-    //console.log('Received event:', JSON.stringify(event, null, 2));
-    console.log('GrangeAgentAdvisoryBoardMember index: Event parameter information');
-    console.dir(event);
-    
-    var newEvent = parameterProcessor.processor(event);
-    console.log('New Event');
-    console.dir(newEvent);
-
-    var parameterParser = new Parser(newEvent);
-    var functionHandler = parameterParser.parse();
-    console.dir(functionHandler);
-    functionHandler.call(grangeRepository, newEvent.memberName, function(err, data) {
-        if(err) {
-            console.log('Error: Failed to service request');
-            callback(err);
-        } else {
-            console.log('Success: Serviced Requests');
-            var finalResponse = responseFormatter.format(data, newEvent.channel);
-            console.log('Final response from Lambda handler');
-            console.dir(finalResponse);
-            callback(null, finalResponse);
-        }
-    });
+var handlers = {
+    'WelcomeIntent': function() {
+        var welcomeMessage = ExpoData.welcome;
+        this.emit(':tellWithCard', "Welcome", "My Grange", "Welcome to my Grange");
+    },
+    'LaunchRequest': function () {
+        var welcomeMessage = ExpoData.welcome;
+        this.emit(':tellWithCard', welcomeMessage, "Grange agent expo", welcomeMessage);
+    },
+    'HelloWorldIntent': function () {
+        this.emit('SayHello')
+    },
+    'SayHello': function () {
+        this.emit(':tell', 'Hello World!');
+    },
+    'DefaultWelcomeIntent': function () {
+        this.emit(':tell', 'Hello World, default welcome intent');
+    },
+    'Unhandled': function () {
+        var speechOutput = "Unhandled request"
+        this.emit(':tell', speechOutput, speechOutput);
+    },
+    'AMAZON.HelpIntent': function () {
+        var speechOutput = "Help message";
+        var reprompt = speechOutput;
+        this.emit(':tell', speechOutput, reprompt);
+    },
+    'AMAZON.CancelIntent': function () {
+        this.emit(':tell', "Thanks for using My Grange. Have a great rest of the day");
+    },
+    'AMAZON.StopIntent': function () {
+        this.emit(':tell', "Thanks for using My Grange. Have a great rest of the day");
+    }
 };
